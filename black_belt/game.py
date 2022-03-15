@@ -235,3 +235,22 @@ class State(namedtuple(
             'legs_ac: %i  |legs_ac: %i\n'%(
                 self.p1.card_state.legs_ac, self.p2.card_state.legs_ac)
         )
+    
+    def serialize(self):
+        return ','.join(str(i) for i in
+            self.p1.hit_state +
+            self.p1.card_state +
+            self.p2.hit_state +
+            self.p2.card_state
+        )
+    
+    @staticmethod
+    def deserialize(data):
+        data = tuple(int(d) for d in data.split(','))
+        p1_hit_state = HitState(data[:3])
+        p1_card_state = CardState(data[3:9])
+        p1 = PlayerState(p1_hit_state, p1_card_state)
+        p2_hit_state = HitState(data[9:12])
+        p2_card_state = CardState(data[12:])
+        p2 = PlayerState(p2_hit_state, p2_card_state)
+        return State(p1, p2)
