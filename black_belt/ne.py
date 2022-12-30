@@ -2,7 +2,7 @@ import numpy
 
 from scipy.optimize import linprog
 
-def equilibrium(game):
+def linear_zero_sum(game):
     opt = linprog(
         numpy.ones(game.shape[1]),
         A_ub=-game,

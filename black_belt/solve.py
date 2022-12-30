@@ -24,7 +24,7 @@ from black_belt.game import (
     start_legs_a,
     start_legs_ac,
 )
-from ne import equilibrium
+from ne import linear_zero_sum
 
 all_live_hit_states = []
 for h in range(max_head_hits):
@@ -124,7 +124,7 @@ for num_cards in range(start_cards, total_starting_cards+1):
                             state = State(p1, p2)
                             payoff = payoff_matrix(state, previous_card_zip)
                             try:
-                                policy, value = equilibrium(payoff)
+                                policy, value = linear_zero_sum(payoff)
                             except ValueError:
                                 numpy.save('./dump_%i.npy'%iterate.n, payoff)
                                 raise
