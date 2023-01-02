@@ -54,6 +54,7 @@ class HitState(namedtuple(
     
     total = property(get_total)
     
+    @property
     def is_dead(self):
         return (
             self.head >= max_head_hits or
@@ -82,8 +83,9 @@ class HitState(namedtuple(
             else:
                 return self
     
+    @property
     def terminal(self):
-        return self.is_dead()
+        return self.is_dead
 
 if game_mode == 'large':
     start_head_a = 1
@@ -120,6 +122,7 @@ class CardState(namedtuple(
     ),
 )):
     
+    @property
     def action_space(self):
         action_space = []
         if self.head_a:
@@ -146,13 +149,13 @@ class CardState(namedtuple(
         update = {card_name : getattr(self, card_name)-1}
         return self._replace(**update)
     
+    @property
     def terminal(self):
         return sum(self) == 0
     
-    def get_total(self):
+    @property
+    def total(self):
         return sum(self)
-    
-    total = property(get_total)
 
 class PlayerState(namedtuple(
     'PlayerState',
@@ -166,14 +169,17 @@ class PlayerState(namedtuple(
             card_state=self.card_state.transition(actions),
         )
     
+    @property
     def is_dead(self):
-        return self.hit_state.is_dead()
+        return self.hit_state.is_dead
     
+    @property
     def terminal(self):
-        return self.hit_state.terminal() or self.card_state.terminal()
+        return self.hit_state.terminal or self.card_state.terminal
     
+    @property
     def action_space(self):
-        return self.card_state.action_space()
+        return self.card_state.action_space
 
 class State(namedtuple(
     'State',
@@ -188,13 +194,15 @@ class State(namedtuple(
             p2=self.p2.transition((a2,a1)),
         )
     
+    @property
     def terminal(self):
-        return self.p1.terminal() or self.p2.terminal()
+        return self.p1.terminal or self.p2.terminal
     
+    @property
     def value(self):
-        if self.terminal():
-            p1_dead = self.p1.is_dead()
-            p2_dead = self.p2.is_dead()
+        if self.terminal:
+            p1_dead = self.p1.is_dead
+            p2_dead = self.p2.is_dead
             if p1_dead and p2_dead:
                 return 0.5
             elif p1_dead:
@@ -206,12 +214,13 @@ class State(namedtuple(
         else:
             return None
     
+    @property
     def action_space(self):
-        return self.p1.action_space(), self.p2.action_space()
+        return self.p1.action_space, self.p2.action_space
     
     def __str__(self):
-        p1_dead = 'DEAD' if self.p1.is_dead() else '    '
-        p2_dead = 'DEAD' if self.p2.is_dead() else '    '
+        p1_dead = 'DEAD' if self.p1.is_dead else '    '
+        p2_dead = 'DEAD' if self.p2.is_dead else '    '
         return (
             'p1: %s    |p2: %s\n'%(p1_dead, p2_dead) +
             '------------+------------\n' +
