@@ -179,6 +179,10 @@ class PlayerState(namedtuple(
     @property
     def action_space(self):
         return self.card_state.action_space
+    
+    @property
+    def flat(self):
+        return self.hit_state + self.card_state
 
 class State(namedtuple(
     'State',
@@ -262,3 +266,7 @@ class State(namedtuple(
         p2_card_state = CardState(data[12:])
         p2 = PlayerState(p2_hit_state, p2_card_state)
         return State(p1, p2)
+    
+    @property
+    def flat(self):
+        return self.p1.flat + self.p2.flat
