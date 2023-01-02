@@ -49,10 +49,9 @@ class HitState(namedtuple(
     ('head', 'body', 'legs'),
     defaults=(0,0,0),
 )):
-    def get_total(self):
+    @property
+    def total(self):
         return sum(self)
-    
-    total = property(get_total)
     
     @property
     def is_dead(self):
