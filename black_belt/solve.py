@@ -3,6 +3,7 @@ import os
 import sys
 import multiprocessing
 import pickle
+import json
 from zipfile import ZipFile
 from argparse import ArgumentParser
 
@@ -31,14 +32,14 @@ from ne import lp_solve_zero_sum
 
 def payoff_matrix_OLD(state, previous_card_zipfile):
     NO
-    p1_actions, p2_actions = state.action_space()
+    p1_actions, p2_actions = state.action_space
     p1_actions = p1_actions
     p2_actions = p2_actions
     payoff = numpy.zeros((len(p2_actions), len(p1_actions)))
     for i, p1_action in enumerate(p1_actions):
         for j, p2_action in enumerate(p2_actions):
             successor = state.transition((p1_action, p2_action))
-            value = successor.value()
+            value = successor.value
             if value is None:
                 #value = state_values[successor]
                 value_path = successor.serialize() + '_value.npy'
@@ -136,11 +137,11 @@ def state_to_index(state):
     return index
 
 def index_to_state(index):
-    num_cards = 1
-    while index < card_count_ranges[num_cards][0]:
-        num_cards += 1
-    
-    range_start, range_end = card_count_ranges[num_cards]
+    for num_cards, (range_start, range_end) in card_count_ranges.items():
+        if index >= range_start and index < range_end:
+            break
+    else:
+        raise Exception('baaaaaad thing man')
     
     c = len(card_states[num_cards])
     h = len(all_live_hit_states)
@@ -157,37 +158,77 @@ def index_to_state(index):
     )
     return State(p1, p2)
 
+# setup multiprocessing
 context = multiprocessing.get_context(None)
 policy_shape = (9, total_states)
-p1_policy = context.RawArray('d', policy_shape[0]*policy_shape[1])
-p2_policy = context.RawArray('d', policy_shape[0]*policy_shape[1])
+policy = context.RawArray('d', policy_shape[0]*policy_shape[1])
 value = context.RawArray('d', total_states)
 complete = context.RawArray('d', total_states)
+status = context.RawArray('d', args.num_procs)
+
+# zero/load previous data
 complete_np = numpy.frombuffer(complete, dtype=numpy.float64)
 numpy.copyto(complete_np, numpy.zeros(total_states))
+status_np = numpy.frombuffer(status, dtype=numpy.float64)
+numpy.copyto(status_np, numpy.zeros(args.num_procs))
 
 def payoff_matrix(index):
     state = index_to_state(index)
-    p1_actions, p2_actions = state.action_space()
+    p1_actions, p2_actions = state.action_space
     payoff = numpy.zeros((len(p2_actions), len(p1_actions)))
     for i, p1_action in enumerate(p1_actions):
         for j, p2_action in enumerate(p2_actions):
             successor = state.transition((p1_action, p2_action))
-            successor_value = successor.value()
-            if value is None:
+            successor_value = successor.value
+            if successor_value is None:
                 successor_index = state_to_index(successor)
                 while not complete[successor_index]:
                     time.sleep(0.1)
                 successor_value = value[successor_index]
             payoff[j,i] = successor_value
     
-    return payoff
+    return payoff, p1_actions
 
 def worker(proc_id):
-    for i in range(proc_id, total_states, args.num_procs):
-        state = index_to_state(i)
-        CONTINUE_HERE
-        complete[i] = 1
+    try:
+        for i in range(proc_id, total_states, args.num_procs):
+            if complete[i]:
+                continue
+            game, p1_actions = payoff_matrix(i)
+            try:
+                p, v = lp_solve_zero_sum(game)
+            except:
+                failure_log = {
+                    'index' : i,
+                    'state' : index_to_state(i),
+                    'game' : game.tolist(),
+                    'error' : 'solve_error',
+                }
+                with open('./fail_log_%i.json'%proc_id, 'w') as f:
+                    json.dump(failure_log, f, indent=2)
+                    raise
+            
+            if numpy.any(numpy.isnan(v)) or numpy.any(numpy.isnan(p)):
+                failure_log = {
+                    'index' : i,
+                    'state' : index_to_state(i),
+                    'game' : game.tolist(),
+                    'v' : v,
+                    'p' : p,
+                    'error' : 'value_error',
+                }
+                with open('./fail_log_%i.json'%proc_id, 'w') as f:
+                    json.dump(failure_log, f, indent=2)
+                    raise Exception('nan value')
+                    
+            value[i] = v
+            full_p = numpy.zeros(9)
+            full_p[[int(a) for a in p1_actions]] = p
+            policy[i*9:(i+1)*9] = full_p
+            complete[i] = 1
+    except:
+        status[proc_id] = 1
+        raise
 
 for i in range(args.num_procs):
     process = context.Process(
@@ -198,8 +239,21 @@ for i in range(args.num_procs):
     process.daemon = True
     process.start()
 
-while complete_np.sum() != total_states:
-    print(complete_np.sum() / total_states)
+progress = tqdm.tqdm(total=total_states+1)
+last_complete = 0
+total_complete = 0
+try:
+    while total_complete < total_states:
+        total_complete = complete_np.sum()
+        progress.update(int(total_complete - last_complete))
+        last_complete = total_complete
+        if status_np.sum():
+            indices = numpy.where(status_np)
+            raise Exception(
+                'workers ' + ','.join(str(i) for i in indices) + ' failed')
+        time.sleep(0.1)
+finally:
+    pass
 
 breakpoint()
 
