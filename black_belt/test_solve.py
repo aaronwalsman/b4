@@ -4,7 +4,7 @@ import argparse
 
 import tqdm
 
-from black_belt.game import State, game_mode
+from black_belt.bodega_brawl import State, game_mode
 from black_belt.game_statistics import state_to_index, payoff_matrix
 from black_belt.agent import SolvedAgent
 from black_belt.ne import best_response

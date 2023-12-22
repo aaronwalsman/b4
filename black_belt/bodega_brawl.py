@@ -1,7 +1,5 @@
 from collections import namedtuple
 
-import blackbelt.constants as constants
-
 '''
 This module implements all the functionality of the Bodega Brawl game.
 The game_mode constant was for debugging purposes, and allowed me to build
@@ -123,10 +121,10 @@ class HitState(namedtuple(
     @property
     def is_dead(self):
         return (
-            self.head >= constants.max_head_hits or
-            self.body >= constants.max_body_hits or
-            self.legs >= constants.max_legs_hits or
-            self.total >= constants.max_total_hits
+            self.head >= max_head_hits or
+            self.body >= max_body_hits or
+            self.legs >= max_legs_hits or
+            self.total >= max_total_hits
         )
     
     def transition(self, actions):

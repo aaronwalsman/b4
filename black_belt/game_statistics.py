@@ -2,7 +2,7 @@ import time
 
 import numpy
 
-from black_belt.game import (
+from black_belt.bodega_brawl import (
     HitState,
     CardState,
     PlayerState,

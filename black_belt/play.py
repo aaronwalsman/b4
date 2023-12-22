@@ -2,7 +2,7 @@ import random
 import pickle
 import argparse
 
-from black_belt.game import State, game_mode
+from black_belt.bodega_brawl import State, game_mode
 from black_belt.game_statistics import state_to_index
 from black_belt.agent import SolvedAgent
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # load agent
-    agent = SolvedAgent('./%s_final.pkl'%game_mode)
+    agent = SolvedAgent('./solutions/%s_final.pkl'%game_mode)
     
     # initialize the game state
     state = State()

@@ -14,7 +14,7 @@ from scipy.optimize import OptimizeWarning
 
 import tqdm
 
-from black_belt.game import game_mode, State
+from black_belt.bodega_brawl import game_mode, State
 from black_belt.ne import lp_solve_zero_sum
 from black_belt.game_statistics import (
     total_states,
@@ -128,5 +128,5 @@ if __name__ == '__main__':
     # save the policy and value
     np_policy = numpy.frombuffer(policy, dtype=numpy.float64).reshape(-1, 9)
     np_value = numpy.frombuffer(value, dtype=numpy.float64)
-    with open('%s_final.pkl'%game_mode, 'wb') as f:
+    with open('./solutions/%s_final.pkl'%game_mode, 'wb') as f:
         pickle.dump({'p':np_policy, 'v':np_value}, f)
