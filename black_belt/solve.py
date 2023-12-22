@@ -35,7 +35,7 @@ of the game with 40 parallel processes.
 parser = ArgumentParser()
 parser.add_argument('--num-procs', type=int, default=40)
 
-if __name__ == '__main__':
+def solve():
     
     # parse the arguments
     args = parser.parse_args()
@@ -130,3 +130,6 @@ if __name__ == '__main__':
     np_value = numpy.frombuffer(value, dtype=numpy.float64)
     with open('./solutions/%s_final.pkl'%game_mode, 'wb') as f:
         pickle.dump({'p':np_policy, 'v':np_value}, f)
+
+if __name__ == '__main__':
+    solve()

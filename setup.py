@@ -19,6 +19,11 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     entry_points = {
+        'console_scripts' : [
+            'b4_play=black_belt.play:play',
+            'b4_solve=black_belt.solve:solve',
+            'b4_test_solve=black_belt.test_solve:test_solve',
+        ]
     },
     classifiers = [
         'Programming Language :: Python :: 3',

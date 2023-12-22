@@ -23,7 +23,8 @@ parser.add_argument(
     '--verbose', action='store_true',
     help='Shows action probabilities and value estimates')
 
-if __name__ == '__main__':
+def play():
+
     # parse args
     args = parser.parse_args()
     
@@ -94,3 +95,6 @@ if __name__ == '__main__':
     print('Final State:')
     print(str(state).replace('p1: ', 'cpu:').replace('p2: ', 'you:'))
     print(state.value)
+
+if __name__ == '__main__':
+    play()

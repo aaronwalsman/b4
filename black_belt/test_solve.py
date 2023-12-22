@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--opponent', type=str, default='random')
 parser.add_argument('--games', type=int, default=10000)
 
-if __name__ == '__main__':
+def test_solve():
     agent = SolvedAgent('./solutions/%s_final.pkl'%game_mode)
 
     opponent = 'random'
@@ -49,3 +49,6 @@ if __name__ == '__main__':
 
     average_value = (sum(results)/len(results) - 0.5) * (1./0.8) + 0.5
     print(average_value)
+
+if __name__ == '__main__':
+    test_solve()
