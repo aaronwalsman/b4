@@ -1,8 +1,74 @@
 from collections import namedtuple
 
-game_mode = 'large' # 'large' or 'small' or 'tiny'
+import blackbelt.constants as constants
+
+'''
+This module implements all the functionality of the Bodega Brawl game.
+The game_mode constant was for debugging purposes, and allowed me to build
+smaller versions of the game with different win conditions and starting numbers
+of cards.  The 'large' setting is for the default game.
+'''
+
+game_mode = 'large' # 'large' 'medium' 'small' or 'tiny'
+
+if game_mode == 'large':
+    max_head_hits = 2
+    max_body_hits = 3
+    max_legs_hits = 4
+    max_total_hits = 5
+elif game_mode == 'medium':
+    max_head_hits = 2
+    max_body_hits = 3
+    max_legs_hits = 3
+    max_total_hits = 4
+elif game_mode == 'small':
+    max_head_hits = 2
+    max_body_hits = 2
+    max_legs_hits = 2
+    max_total_hits = 3
+elif game_mode == 'tiny':
+    max_head_hits = 1
+    max_body_hits = 2
+    max_legs_hits = 2
+    max_total_hits = 2
+
+if game_mode == 'large':
+    start_head_a = 1
+    start_head_ac = 3
+    start_body_a = 1
+    start_body_ac = 4
+    start_legs_a = 1
+    start_legs_ac = 4
+elif game_mode == 'medium':
+    start_head_a = 1
+    start_head_ac = 2
+    start_body_a = 1
+    start_body_ac = 2
+    start_legs_a = 1
+    start_legs_ac = 2
+elif game_mode == 'small':
+    start_head_a = 0
+    start_head_ac = 2
+    start_body_a = 0
+    start_body_ac = 2
+    start_legs_a = 0
+    start_legs_ac = 2
+elif game_mode == 'tiny':
+    start_head_a = 0
+    start_head_ac = 1
+    start_body_a = 0
+    start_body_ac = 2
+    start_legs_a = 0
+    start_legs_ac = 0
 
 class Action(namedtuple('Action', ('region', 'card', 'mode'))):
+    '''
+    Action representation.  Contains three components:
+    [0] "region" (head,body,legs)
+    [1] "card" (attack,attack/counter)
+    [2] "mode" (attack,counter)
+    The counter mode can only be used with an attack/counter card.
+    '''
     def card_name(self):
         if self.card == 'attack':
             c = 'a'
@@ -15,7 +81,21 @@ class Action(namedtuple('Action', ('region', 'card', 'mode'))):
     
     def __str__(self):
         return ('%s_%s_%s'%self).upper()
+    
+    def __int__(self):
+        i = 0
+        if self.region == 'body':
+            i += 3
+        elif self.region == 'legs':
+            i += 6
+        if self.card == 'attack/counter':
+            if self.mode == 'attack':
+                i += 1
+            elif self.mode == 'counter':
+                i += 2
+        return i
 
+# instantiate all possible actions
 actions = {
     'HEAD_A_A' : Action('head', 'attack', 'attack'),
     'HEAD_AC_A' : Action('head', 'attack/counter', 'attack'),
@@ -28,27 +108,14 @@ actions = {
     'LEGS_AC_C' : Action('legs', 'attack/counter', 'counter'),
 }
 
-if game_mode == 'large':
-    max_head_hits = 2
-    max_body_hits = 3
-    max_legs_hits = 4
-    max_total_hits = 5
-elif game_mode == 'small':
-    max_head_hits = 2
-    max_body_hits = 2
-    max_legs_hits = 2
-    max_total_hits = 3
-elif game_mode == 'tiny':
-    max_head_hits = 1
-    max_body_hits = 2
-    max_legs_hits = 2
-    max_total_hits = 2
-
 class HitState(namedtuple(
     'HitState',
     ('head', 'body', 'legs'),
     defaults=(0,0,0),
 )):
+    '''
+    Defines how many times each body part has been hit by the opponent.
+    '''
     @property
     def total(self):
         return sum(self)
@@ -56,10 +123,10 @@ class HitState(namedtuple(
     @property
     def is_dead(self):
         return (
-            self.head >= max_head_hits or
-            self.body >= max_body_hits or
-            self.legs >= max_legs_hits or
-            self.total >= max_total_hits
+            self.head >= constants.max_head_hits or
+            self.body >= constants.max_body_hits or
+            self.legs >= constants.max_legs_hits or
+            self.total >= constants.max_total_hits
         )
     
     def transition(self, actions):
@@ -86,28 +153,6 @@ class HitState(namedtuple(
     def terminal(self):
         return self.is_dead
 
-if game_mode == 'large':
-    start_head_a = 1
-    start_head_ac = 3
-    start_body_a = 1
-    start_body_ac = 4
-    start_legs_a = 1
-    start_legs_ac = 4
-elif game_mode == 'small':
-    start_head_a = 0
-    start_head_ac = 2
-    start_body_a = 0
-    start_body_ac = 2
-    start_legs_a = 0
-    start_legs_ac = 2
-elif game_mode == 'tiny':
-    start_head_a = 0
-    start_head_ac = 1
-    start_body_a = 0
-    start_body_ac = 2
-    start_legs_a = 0
-    start_legs_ac = 0
-
 class CardState(namedtuple(
     'CardState',
     ('head_a', 'head_ac', 'body_a', 'body_ac', 'legs_a', 'legs_ac'),
@@ -120,7 +165,9 @@ class CardState(namedtuple(
         start_legs_ac,
     ),
 )):
-    
+    '''
+    Defines how many of each card type a player has left.
+    '''
     @property
     def action_space(self):
         action_space = []
@@ -161,7 +208,9 @@ class PlayerState(namedtuple(
     ('hit_state', 'card_state'),
     defaults=(HitState(), CardState()),
 )):
-    
+    '''
+    Contains a HitState and CardState to define the state for a single player.
+    '''
     def transition(self, actions):
         return PlayerState(
             hit_state=self.hit_state.transition(actions),
@@ -189,7 +238,9 @@ class State(namedtuple(
     ('p1', 'p2'),
     defaults=(PlayerState(), PlayerState()),
 )):
-    
+    '''
+    Contains two PlayerStates to represent the state of an entire game.
+    '''
     def transition(self, actions):
         a1, a2 = actions
         return State(
