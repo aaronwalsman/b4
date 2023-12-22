@@ -7,8 +7,7 @@ def lp_solve_zero_sum(game):
         numpy.ones(game.shape[1]),
         A_ub=-game,
         b_ub=-numpy.ones(game.shape[0]),
-        method='simplex',
-        options={'tol':1e-6},
+        method='highs',
     )
     
     value = 1./numpy.sum(opt.x)
