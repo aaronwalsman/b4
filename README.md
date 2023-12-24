@@ -1,16 +1,16 @@
-# b4
+# B4
 Bodega Brawl Black Belt
 
 This package provides code to solve the card game [Bodega Brawl](https://www.bodegabrawl.com/).  This is not a particularly complex or difficult game, but solving it was a fun experiment over the holidays.
 
-## game rules
+## Game Rules
 This game is designed to simulate a martial arts duel.  In it, each player starts with a hand of 14 cards and uses them to attack their opponent, or defend from their opponent's attacks.  Each turn, both players choose a card and reveal it simultaneously, then resolves the cards effects based on the selected combination.  Each card attacks or defends against one of three regions: head, body or legs.  Some cards can only be used to attack the specified region, while others can be used to either attack or defend.
 
 If both players attack the same region simultaneously, the attacks cancel each other out and both are discarded.  If one player attacks a region and the other player does not defend that region, the attack is registered as a strike against the attacked region.  On the other hand if the region was defended, the attack is discarded, and the defender registers a strike against the attacker in that region instead.  If both players attack different regions, then both are registered as a strike.  The game ends when either player has been struck in the head twice, the body three times, the legs four times, or has suffered a combined total of five strikes to any region.
 
 The normal rules state if both players are knocked out simultaneously, the result is sudden death, but our implementation instead records this as a draw.
 
-## solving the game
+## Solving the Game
 Solving this game is accomplished by computing the Nash Equilibrium for each state in the game, starting with those nearest the end of the game and working backward.  The Nash Equilibria are computed using [linear programming](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html) via scipy.  The main difficulty is simply churning through all possible game states.
 
 Naively, each player cold be holding a subset of 14 cards, and could have zero or one head strikes against them, zero to two body strikes against them and zero to three leg strikes against them.  There are `2^14 = 16386` possible subsets of 14 cards.  Meanwhile, the numbers of possible strikes against a player is `2x3x4=24`.  Combining this for two players result in `(16384 x 24)^2 = 154618822656` possible states.
@@ -57,7 +57,7 @@ Combining these with the 20 possible hit states results in:
 ```
 There are further optimizations you can do, but 28.8 million seems like a manageable number, so we stop here and solve all of these states, starting those where every action results in the game ending and working our way backward.
 
-## installing
+## Installation
 First use pip to install the package by running:
 ```
 cd b4
@@ -74,5 +74,3 @@ To play against the computer, run:
 b4_play
 ```
 This will use a text-based interface to keep track of the state and tell you the opponent's actions.  The `--drive` flag can be used to pilot the agent against another human when playing with actual cards.  The `--verbose` flag will show the agent's action probabilities as well as suggest optimal action probabilities for the human player.
-
-## code
