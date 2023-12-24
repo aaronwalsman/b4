@@ -35,10 +35,7 @@ of the game with 40 parallel processes.
 parser = ArgumentParser()
 parser.add_argument('--num-procs', type=int, default=40)
 
-def solve():
-    
-    # parse the arguments
-    args = parser.parse_args()
+def solve(num_procs=40):
 
     # setup multiprocessing and shared data
     context = multiprocessing.get_context(None)
@@ -46,18 +43,18 @@ def solve():
     policy = context.RawArray('d', policy_shape[0]*policy_shape[1])
     value = context.RawArray('d', total_states)
     complete = context.RawArray('d', total_states)
-    status = context.RawArray('d', args.num_procs)
+    status = context.RawArray('d', num_procs)
 
     # zero the shared data
     complete_np = numpy.frombuffer(complete, dtype=numpy.float64)
     numpy.copyto(complete_np, numpy.zeros(total_states))
     status_np = numpy.frombuffer(status, dtype=numpy.float64)
-    numpy.copyto(status_np, numpy.zeros(args.num_procs))
+    numpy.copyto(status_np, numpy.zeros(num_procs))
     
     # worker function that will be launched in each new process
     def worker(proc_id):
         try:
-            for i in range(proc_id, total_states, args.num_procs):
+            for i in range(proc_id, total_states, num_procs):
                 if complete[i]:
                     continue
                 game, p1_actions = payoff_matrix(
@@ -102,7 +99,7 @@ def solve():
             raise
     
     # make new processes
-    for i in range(args.num_procs):
+    for i in range(num_procs):
         process = context.Process(
             target=worker,
             name='worker_%i'%i,
@@ -132,6 +129,13 @@ def solve():
         os.makedirs('./solutions')
     with open('./solutions/%s_final.pkl'%game_mode, 'wb') as f:
         pickle.dump({'p':np_policy, 'v':np_value}, f)
+    
+def solve_commandline():
+    
+    # parse the arguments
+    args = parser.parse_args()
+    
+    solve(num_procs=args.num_procs)
 
 if __name__ == '__main__':
-    solve()
+    solve_commandline()

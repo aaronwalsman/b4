@@ -23,10 +23,7 @@ parser.add_argument(
     '--verbose', action='store_true',
     help='Shows action probabilities and value estimates')
 
-def play():
-
-    # parse args
-    args = parser.parse_args()
+def play(drive=False, verbose=False):
     
     # load agent
     agent = SolvedAgent('./solutions/%s_final.pkl'%game_mode)
@@ -43,37 +40,34 @@ def play():
         p1_actions, p2_actions = state.action_space
         
         # look up the agent's policy
-        state_index = state_to_index(state)
-        agent_policy = agent.play(state_index)
-        if args.verbose:
+        agent_policy = agent.policy(state)
+        if verbose:
             print('CPU played the following distribution:')
             for i, p1_action in enumerate(p1_actions):
                 print('%i: %s [%.04f]'%(
                     i, p1_action, agent_policy[int(p1_action)]))
-            print('V: %.04f'%agent.data['v'][state_index])
+            print('V: %.04f'%agent.value(state))
             print()
         
         # if this is in drive mode, pick a CPU action now
-        if args.drive:
-            weights = [agent_policy[int(a)] for a in p1_actions]
-            p1_action = random.choices(p1_actions, weights=weights)[0]
+        if drive:
+            p1_action = agent.play(state)
             print('CPU played: %s'%str(p1_action))
             print()
         
         # get the recommended policy for the human
         opposite_state = State(state.p2, state.p1)
-        opposite_state_index = state_to_index(opposite_state)
-        recommended_policy = agent.play(opposite_state_index)
+        recommended_policy = agent.policy(opposite_state)
         
         # pick an action for player 2
         print('Choose an action:')
         for i, p2_action in enumerate(p2_actions):
-            if args.verbose:
+            if verbose:
                 print('%i: %s [%.04f]'%(
                     i, p2_action, recommended_policy[int(p2_action)]))
             else:
                 print('%i: %s'%(i, p2_action))
-        if args.verbose:
+        if verbose:
             print('V: %0.4f'%agent.data['v'][opposite_state_index])
             print()
         
@@ -83,9 +77,8 @@ def play():
         p2_action = p2_actions[i]
         
         # if not in drive mode, pick a CPU action now
-        if not args.drive:
-            weights = [agent_policy[int(a)] for a in p1_actions]
-            p1_action = random.choices(p1_actions, weights=weights)[0]
+        if not drive:
+            p1_action = agent.play(state)
             print('CPU played: %s'%str(p1_action))
         
         # transition to the next state using the players' actions
@@ -96,5 +89,11 @@ def play():
     print(str(state).replace('p1: ', 'cpu:').replace('p2: ', 'you:'))
     print(state.value)
 
+def play_commandline():
+    # parse args
+    args = parser.parse_args()
+    
+    play(drive=args.drive, verbose=args.verbose)
+
 if __name__ == '__main__':
-    play()
+    play_commandline()
