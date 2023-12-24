@@ -16,7 +16,7 @@ Naively, each player could be holding a subset of 14 cards, and could have zero 
 
 The first thing we can do to reduce this is to realize that four of the possible hit states are not feasible because they would knock out a player due to containing five or more maximum strikes.  This cuts the total states to `(16384 x 20)^2 = 107374182400`.
 
-Next we realize that each player must have the same number of cards in their hand as their opponent.  If we sort the number of card states into the number of cards it contains we find the following:
+Next we realize that there are many copies of some cards, and that each player must have the same number of cards in their hand as their opponent.  If we sort the number of card states into the number of cards it contains we find the following:
 ```
  1 cards : 6   1-player card states -> 6^2 = 36      2-player card states
  2 cards : 18  1-player card states -> 18^2 = 342    2-player card states
