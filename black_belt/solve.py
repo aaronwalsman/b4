@@ -128,6 +128,8 @@ def solve():
     # save the policy and value
     np_policy = numpy.frombuffer(policy, dtype=numpy.float64).reshape(-1, 9)
     np_value = numpy.frombuffer(value, dtype=numpy.float64)
+    if not os.path.exists('./solutions'):
+        os.makedirs('./solutions')
     with open('./solutions/%s_final.pkl'%game_mode, 'wb') as f:
         pickle.dump({'p':np_policy, 'v':np_value}, f)
 
