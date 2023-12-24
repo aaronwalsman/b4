@@ -56,5 +56,3 @@ To play against the computer, run:
 b4_play
 ```
 This will use a text-based interface to keep track of the state and tell you the opponent's actions.  The `--drive` flag can be used to pilot the agent against another human when playing with actual cards.  The `--verbose` flag will show the agent's action probabilities as well as suggest optimal action probabilities for the human player.
-
-## Results
