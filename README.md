@@ -56,3 +56,6 @@ To play against the computer, run:
 b4_play
 ```
 This will use a text-based interface to keep track of the state and tell you the opponent's actions.  The `--drive` flag can be used to pilot the agent against another human when playing with actual cards.  The `--verbose` flag will show the agent's action probabilities as well as suggest optimal action probabilities for the human player.
+
+## Results
+I think it works?  It beat me 10 wins to 8 losses and 2 draws.  It beat my Mom 19 wins to 13 losses and 5 draws.  It beats a random player 64% of the time over 100000 games.  I think these results speak to the inherent randomness and lack of skill required to play this game, but we are consistently better than two specific humans and a random player, so hey, that's something.
