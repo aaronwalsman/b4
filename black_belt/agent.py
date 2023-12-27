@@ -91,3 +91,91 @@ class ArgmaxCounterAgent(Agent):
                 return policy
         
         return self.random_agent.policy(state)
+
+class MCTSNode:
+    def __init__(self, state, c=2**0.5, child_nodes=None):
+        self.state = state
+        self.c = c
+        self.visits = 0
+        self.my_actions, self.opponent_actions = state.action_space
+        self.my_child_visits = numpy.zeros(len(self.my_actions))
+        self.my_child_values = numpy.zeros(len(self.my_actions))
+        self.opponent_child_visits = numpy.zeros(len(self.opponent_actions))
+        self.opponent_child_values = numpy.zeros(len(self.opponent_actions))
+        self.opponent_visits = 0
+        if child_nodes is None:
+            child_nodes = {}
+        self.child_nodes = child_nodes
+        self.random_agent = RandomAgent()
+        
+    def sample(self):
+        my_unsampled_children = numpy.where(self.my_child_visits == 0)[0]
+        if my_unsampled_children.shape[0]:
+            my_child_index = random.choice(my_unsampled_children)
+            my_action = self.my_actions[my_child_index]
+        else:
+            my_ucb = (
+                (self.my_child_values / self.my_child_visits) +
+                self.c * (numpy.log(self.visits)/self.my_child_visits)
+            )
+            my_child_index = numpy.argmax(my_ucb)
+            my_action = self.my_actions[my_child_index]
+        self.my_child_visits[my_child_index] += 1
+            
+        opponent_unsampled_children = numpy.where(
+            self.opponent_child_visits == 0)[0]
+        if opponent_unsampled_children.shape[0]:
+            opponent_child_index = random.choice(opponent_unsampled_children)
+            opponent_action = self.opponent_actions[opponent_child_index]
+        else:
+            opponent_ucb = (
+                (1.-self.opponent_child_values / self.opponent_child_visits) +
+                self.c * (numpy.log(self.visits)/self.opponent_child_visits)
+            )
+            opponent_child_index = numpy.argmax(opponent_ucb)
+            opponent_action = self.opponent_actions[opponent_child_index]
+        self.opponent_child_visits[opponent_child_index] += 1
+        self.visits += 1
+        
+        next_state = self.state.transition((my_action, opponent_action))
+        if next_state.terminal:
+            value = next_state.value
+        
+        elif next_state in self.child_nodes:
+            value, _, _ = self.child_nodes[next_state].sample()
+        
+        else:
+            self.child_nodes[next_state] = MCTSNode(
+                next_state, c=self.c, child_nodes=self.child_nodes)
+            while not next_state.terminal:
+                my_next_actions, opponent_next_actions = next_state.action_space
+                my_next_action = random.choice(my_next_actions)
+                opponent_next_action = random.choice(opponent_next_actions)
+                next_state = next_state.transition(
+                    (my_next_action, opponent_next_action))
+            
+            value = next_state.value
+        
+        self.my_child_values[my_child_index] += value
+        self.opponent_child_values[opponent_child_index] += value
+        
+        return value, my_action, opponent_action
+
+class MCTSAgent(Agent):
+    def __init__(self, samples=10000):
+        self.samples = samples
+        self.mcts_nodes = {}
+        self.root_node = MCTSNode(State(), child_nodes=self.mcts_nodes)
+        self.mcts_nodes[State()] = self.root_node
+    
+    def policy(self, state):
+        if state not in self.mcts_nodes:
+            self.mcts_nodes[state] = MCTSNode(
+                state, child_nodes=self.mcts_nodes)
+        mcts_node = self.mcts_nodes[state]
+        for i in range(self.samples):
+            mcts_node.sample()
+        v, my_action, _ = mcts_node.sample()
+        my_policy = [0.] * 9
+        my_policy[int(my_action)] = 1.
+        return my_policy

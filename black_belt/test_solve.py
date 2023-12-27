@@ -11,14 +11,20 @@ from black_belt.agent import (
     RandomAgent,
     BestResponseAgent,
     ArgmaxCounterAgent,
+    MCTSAgent,
 )
 from black_belt.ne import best_response
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--opponent', type=str, default='random')
 parser.add_argument('--games', type=int, default=10000)
+parser.add_argument('--mcts-samples', type=int, default=10000)
 
-def test_solve(opponent='random', games=10000):
+def test_solve(
+    opponent='random',
+    games=10000,
+    mcts_samples=10000,
+):
     
     # load the agent
     agent_path = './solutions/%s_final.pkl'%game_mode
@@ -33,6 +39,8 @@ def test_solve(opponent='random', games=10000):
         opponent_agent = ArgmaxCounterAgent(agent)
     elif opponent == 'solved':
         opponent_agent = SolvedAgent(agent_path)
+    elif opponent == 'mcts':
+        opponent_agent = MCTSAgent(mcts_samples)
     
     results = []
     for i in tqdm.tqdm(range(games)):
@@ -57,12 +65,18 @@ def test_solve(opponent='random', games=10000):
     losses = sum([r < 0.4 for r in results])
     draws = len(results) - wins - losses
     print('Wins: %i, Draws: %i, Losses: %i'%(wins, draws, losses))
+    
+    breakpoint()
 
 def test_solve_commandline():
     # parse args
     args = parser.parse_args()
     
-    test_solve(opponent=args.opponent, games=args.games)
+    test_solve(
+        opponent=args.opponent,
+        games=args.games,
+        mcts_samples=args.mcts_samples,
+    )
 
 if __name__ == '__main__':
     test_solve_from_args()
